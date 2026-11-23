@@ -1,7 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import { CLIENT_URL } from './config/env.js'
-
+import authRoutes from './routes/auth.routes.js'
+import householdRoutes from './routes/household.routes.js'
 const app = express()
 
 // Allow requests from our frontend
@@ -13,6 +14,9 @@ app.use(
 
 // Allow Express to read JSON request bodies
 app.use(express.json())
+
+app.use('/api/auth', authRoutes)
+app.use('/api/households', householdRoutes)
 
 // Health-check endpoint
 app.get('/api/health', (req, res) => {
