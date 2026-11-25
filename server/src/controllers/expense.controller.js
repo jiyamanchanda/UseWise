@@ -1,5 +1,5 @@
 import Expense from '../models/expense.js'
-import Household from '../models/Household.js'
+import Household from '../models/household.js'
 import mongoose from 'mongoose'
 
 export const createExpense = async (req, res) => {
