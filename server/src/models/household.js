@@ -35,7 +35,7 @@ const householdSchema = new mongoose.Schema(
   },
   { timestamps: true }
 )
-
-const Household = mongoose.model('Household', householdSchema)
+const Household = mongoose.models.Household ||
+  mongoose.model('Household', householdSchema)
 
 export default Household
