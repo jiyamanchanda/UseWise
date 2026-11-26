@@ -1,15 +1,18 @@
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { createHousehold, joinHousehold } from '../services/api'
 
 function HouseholdSetup() {
   const [selectedOption, setSelectedOption] = useState('')
   const [householdName, setHouseholdName] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setError('')
 
     if (!selectedOption) {
@@ -17,33 +20,58 @@ function HouseholdSetup() {
       return
     }
 
+    // CREATE HOUSEHOLD
     if (selectedOption === 'create') {
-  if (!householdName.trim()) {
-    setError('Please enter a household name.')
-    return
-  }
+      if (!householdName.trim()) {
+        setError('Please enter a household name.')
+        return
+      }
 
-  navigate('/invite-roommates', {
-    state: {
-      householdName: householdName.trim(),
-    },
-  })
-}
+      try {
+        setLoading(true)
 
+        const data = await createHousehold(householdName.trim())
+
+        navigate('/invite-roommates', {
+          state: {
+            householdName: householdName.trim(),
+            household: data.household,
+          },
+        })
+      } catch (error) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // JOIN HOUSEHOLD
     if (selectedOption === 'join') {
       if (!inviteCode.trim()) {
         setError('Please enter an invitation code.')
         return
       }
 
-      // Temporary frontend flow
-      navigate('/dashboard')
+      try {
+        setLoading(true)
+
+        const data = await joinHousehold(inviteCode.trim())
+
+        navigate('/dashboard', {
+          state: {
+            household: data.household,
+          },
+        })
+      } catch (error) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
-
       <div className="w-full max-w-3xl">
 
         {/* Logo */}
@@ -82,6 +110,7 @@ function HouseholdSetup() {
               setSelectedOption('create')
               setError('')
             }}
+            disabled={loading}
             className={`text-left p-6 rounded-2xl border-2 transition-all ${
               selectedOption === 'create'
                 ? 'border-indigo-600 bg-indigo-50'
@@ -112,6 +141,7 @@ function HouseholdSetup() {
               setSelectedOption('join')
               setError('')
             }}
+            disabled={loading}
             className={`text-left p-6 rounded-2xl border-2 transition-all ${
               selectedOption === 'join'
                 ? 'border-indigo-600 bg-indigo-50'
@@ -141,6 +171,7 @@ function HouseholdSetup() {
         {selectedOption && (
           <div className="bg-white border border-slate-200 rounded-2xl p-6 mt-6">
 
+            {/* Create form */}
             {selectedOption === 'create' && (
               <>
                 <h3 className="text-lg font-bold text-slate-900">
@@ -160,11 +191,13 @@ function HouseholdSetup() {
                   value={householdName}
                   onChange={(e) => setHouseholdName(e.target.value)}
                   placeholder="e.g. The Flatmates, Hostel Room 204"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-100"
                 />
               </>
             )}
 
+            {/* Join form */}
             {selectedOption === 'join' && (
               <>
                 <h3 className="text-lg font-bold text-slate-900">
@@ -184,7 +217,8 @@ function HouseholdSetup() {
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
                   placeholder="Enter your invite code"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-100"
                 />
               </>
             )}
@@ -198,10 +232,16 @@ function HouseholdSetup() {
 
             {/* Continue button */}
             <button
+              type="button"
               onClick={handleContinue}
-              className="w-full mt-5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors"
+              disabled={loading}
+              className="w-full mt-5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Continue
+              {loading
+                ? selectedOption === 'join'
+                  ? 'Joining household...'
+                  : 'Creating household...'
+                : 'Continue'}
             </button>
 
           </div>

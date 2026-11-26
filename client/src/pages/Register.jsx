@@ -1,6 +1,7 @@
-
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { registerUser } from '../services/api'
+
 
 function Register() {
   const navigate = useNavigate()
@@ -13,34 +14,53 @@ function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
+async function handleSubmit(e) {
+  e.preventDefault()
+  setError('')
 
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-      setError('Please fill in all fields.')
-      return
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      return
-    }
-
-    if (!agreeToTerms) {
-      setError('Please agree to the terms before continuing.')
-      return
-    }
-
-    // Temporary frontend-only registration
-    navigate('/household-setup')
+  if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+    setError('Please fill in all fields.')
+    return
   }
+
+  if (password.length < 8) {
+    setError('Password must be at least 8 characters long.')
+    return
+  }
+
+  if (password !== confirmPassword) {
+    setError('Passwords do not match.')
+    return
+  }
+
+  if (!agreeToTerms) {
+    setError('Please agree to the terms before continuing.')
+    return
+  }
+
+  try {
+    setLoading(true)
+
+    const data = await registerUser({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+    })
+
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+
+    navigate('/household-setup')
+
+  } catch (error) {
+    setError(error.message)
+  } finally {
+    setLoading(false)
+  }
+}
+
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -273,11 +293,12 @@ function Register() {
 
             {/* Submit */}
             <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Create account
-            </button>
+  type="submit"
+  disabled={loading}
+  className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+>
+  {loading ? 'Creating account...' : 'Create account'}
+</button>
           </form>
 
           {/* Login link */}

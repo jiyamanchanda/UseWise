@@ -7,7 +7,8 @@ import {
   addMember,
   removeMember,
   updateHousehold,
-  leaveHousehold
+  leaveHousehold,
+  joinHouseholdByCode
 } from '../controllers/household.controller.js'
 
 import protect from '../middleware/auth.middleware.js'
@@ -16,6 +17,7 @@ const router = express.Router()
 
 router.post('/', protect, createHousehold)
 router.get('/', protect, getHouseholds)
+router.post('/join', protect, joinHouseholdByCode)
 router.get('/:id', protect, getHouseholdById)
 router.post('/:id/members', protect, addMember)
 router.delete('/:id/members/:memberId', protect, removeMember)

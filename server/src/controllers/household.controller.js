@@ -1,5 +1,7 @@
+import crypto from 'crypto'
 import Household from '../models/household.js'
 import User from '../models/user.js'
+
 
 export const createHousehold = async (req, res) => {
   try {
@@ -12,8 +14,20 @@ export const createHousehold = async (req, res) => {
       })
     }
 
+    // Generate a unique invitation code
+    let inviteCode
+    let existingHousehold
+
+    do {
+      inviteCode = `UW-${crypto.randomBytes(4).toString('hex').toUpperCase()}`
+
+      existingHousehold = await Household.findOne({ inviteCode })
+    } while (existingHousehold)
+
+    // Create household
     const household = await Household.create({
       name: name.trim(),
+      inviteCode,
       createdBy: req.userId,
       members: [
         {
@@ -23,12 +37,12 @@ export const createHousehold = async (req, res) => {
       ]
     })
 
-
     return res.status(201).json({
       success: true,
       message: 'Household created successfully',
       household
     })
+
   } catch (error) {
     console.error('Create household error:', error.message)
 
@@ -38,6 +52,7 @@ export const createHousehold = async (req, res) => {
     })
   }
 }
+
 
 export const getHouseholds = async (req, res) => {
   try {
@@ -344,3 +359,62 @@ export const leaveHousehold = async (req, res) => {
 }
 
 
+
+export const joinHouseholdByCode = async (req, res) => {
+  try {
+    const { inviteCode } = req.body
+
+    if (!inviteCode || !inviteCode.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invitation code is required'
+      })
+    }
+
+    // Find household using invitation code
+    const household = await Household.findOne({
+      inviteCode: inviteCode.trim().toUpperCase()
+    })
+
+    if (!household) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid invitation code'
+      })
+    }
+
+    // Check whether user is already a member
+    const alreadyMember = household.members.some(
+      member => member.user.toString() === req.userId
+    )
+
+    if (alreadyMember) {
+      return res.status(409).json({
+        success: false,
+        message: 'You are already a member of this household'
+      })
+    }
+
+    // Add logged-in user as a member
+    household.members.push({
+      user: req.userId,
+      role: 'member'
+    })
+
+    await household.save()
+
+    return res.status(200).json({
+      success: true,
+      message: 'Joined household successfully',
+      household
+    })
+
+  } catch (error) {
+    console.error('Join household error:', error.message)
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to join household'
+    })
+  }
+}

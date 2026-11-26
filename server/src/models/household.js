@@ -1,3 +1,4 @@
+
 import mongoose from 'mongoose'
 
 const householdSchema = new mongoose.Schema(
@@ -5,6 +6,14 @@ const householdSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true
+    },
+
+    inviteCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      uppercase: true,
       trim: true
     },
 
@@ -35,6 +44,7 @@ const householdSchema = new mongoose.Schema(
   },
   { timestamps: true }
 )
+
 const Household = mongoose.models.Household ||
   mongoose.model('Household', householdSchema)
 
