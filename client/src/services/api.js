@@ -59,3 +59,49 @@ export const joinHousehold = (inviteCode) => {
     body: JSON.stringify({ inviteCode }),
   })
 }
+
+// Get households belonging to the logged-in user
+export const getHouseholds = () => {
+  return apiRequest('/households')
+}
+
+// Get inventory items for a household
+export const getInventoryItems = (householdId, filters = {}) => {
+  const params = new URLSearchParams({
+    householdId,
+    ...filters,
+  })
+
+  return apiRequest(`/inventory?${params.toString()}`)
+}
+
+// Add a new inventory item
+export const createInventoryItem = (itemData) => {
+  return apiRequest('/inventory', {
+    method: 'POST',
+    body: JSON.stringify(itemData),
+  })
+}
+
+// Update inventory item details
+export const updateInventoryItem = (itemId, updatedData) => {
+  return apiRequest(`/inventory/${itemId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updatedData),
+  })
+}
+
+// Update only the item's quantity
+export const updateInventoryQuantity = (itemId, quantity) => {
+  return apiRequest(`/inventory/${itemId}/quantity`, {
+    method: 'PATCH',
+    body: JSON.stringify({ quantity }),
+  })
+}
+
+// Delete an inventory item
+export const deleteInventoryItem = (itemId) => {
+  return apiRequest(`/inventory/${itemId}`, {
+    method: 'DELETE',
+  })
+}
